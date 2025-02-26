@@ -1,13 +1,13 @@
 <!-- 图片左右排列 -->
 <div style="display: flex; justify-content: space-evenly; align-items: center; width: 100%; overflow: auto; gap: 40px;">
-    <img src="https://github.com/user-attachments/assets/2d575bf2-f228-4a69-b2e3-8947f00eac0b?raw=true" width="300" />
-    <img src="https://github.com/user-attachments/assets/ca75834c-6cdd-4241-b49c-c54cba795668?raw=true" width="300" />
-    <img src="https://github.com/user-attachments/assets/b84cb032-e578-45d1-aaf1-48a5975fd606?raw=true" width="300" />
+    <img src="https://github.com/user-attachments/assets/e809b053-b12a-4470-bab7-94807bcdf5b0?raw=true" width="300" />
+    <img src="https://github.com/user-attachments/assets/3fed7152-97fc-49cd-8f2d-3d77175eaebe?raw=true" width="300" />
+    <img src="https://github.com/user-attachments/assets/6955821a-f752-4cfd-9b1f-f7294b33da0d?raw=true" width="300" />
 </div>
 
 <hr style="border: 1px solid #ccc; margin: 20px 0;">
 
-https://github.com/user-attachments/assets/e67a4a9d-9f82-4211-a067-d2051e225555
+https://github.com/user-attachments/assets/88e2e3fa-7ebf-48b1-8a1f-752ef139e2f0
 
 
 <h1 align="center">
@@ -150,8 +150,79 @@ static void safePresentViewController(UIViewController *viewController, UIViewCo
     });
 }
 
-// 定义过渡代理
-@interface BottomSheetTransition : NSObject <UIViewControllerTransitioningDelegate>
+// 深蓝色按钮（用于所有按钮，统一样式）
+static UIButton *createDeepBlueButton(NSString *title, id target) {
+    UIButton *button = [UIButton buttonWithType:UIButtonTypeCustom];
+    button.translatesAutoresizingMaskIntoConstraints = NO;
+
+    [button.widthAnchor constraintEqualToConstant:120].active = YES;
+    [button.heightAnchor constraintEqualToConstant:40].active = YES;
+
+    // 深蓝色背景（与图片中的按钮颜色一致）
+    button.backgroundColor = [UIColor systemBlueColor];
+
+    button.layer.cornerRadius = 20; // Apple 风格大圆角
+    button.layer.masksToBounds = YES;
+
+    button.layer.shadowColor = [UIColor blackColor].CGColor;
+    button.layer.shadowOpacity = 0.3; // 增强阴影效果
+    button.layer.shadowOffset = CGSizeMake(0, 4);
+    button.layer.shadowRadius = 6; // 增加阴影扩散
+
+    NSMutableAttributedString *attributedTitle = [[NSMutableAttributedString alloc] initWithString:title];
+    NSDictionary *attributes = @{
+        NSFontAttributeName: [UIFont systemFontOfSize:16 weight:UIFontWeightSemibold],
+        NSForegroundColorAttributeName: [UIColor whiteColor] // 白色文字，与深蓝色背景对比
+    };
+    [attributedTitle setAttributes:attributes range:NSMakeRange(0, title.length)];
+    [button setAttributedTitle:attributedTitle forState:UIControlStateNormal];
+
+    [button addTarget:target action:@selector(scaleDown:) forControlEvents:UIControlEventTouchDown];
+    [button addTarget:target action:@selector(scaleUp:) forControlEvents:UIControlEventTouchUpInside | UIControlEventTouchUpOutside];
+
+    return button;
+}
+
+// 渐变按钮样式（用于“👍”和“👎”按钮）
+static UIButton *createModernButton(NSString *title, UIColor *gradientStartColor, UIColor *gradientEndColor, id target) {
+    UIButton *button = [UIButton buttonWithType:UIButtonTypeCustom];
+    button.translatesAutoresizingMaskIntoConstraints = NO;
+
+    [button.widthAnchor constraintEqualToConstant:120].active = YES;
+    [button.heightAnchor constraintEqualToConstant:40].active = YES;
+
+    CAGradientLayer *gradientLayer = [CAGradientLayer layer];
+    gradientLayer.colors = @[(id)gradientStartColor.CGColor, (id)gradientEndColor.CGColor];
+    gradientLayer.startPoint = CGPointMake(0, 0.5);
+    gradientLayer.endPoint = CGPointMake(1, 0.5);
+    gradientLayer.frame = button.bounds;
+    [button.layer insertSublayer:gradientLayer atIndex:0];
+
+    button.layer.cornerRadius = 20; // 增加圆角，与参考图片一致
+    button.layer.masksToBounds = YES;
+
+    button.layer.shadowColor = [UIColor blackColor].CGColor;
+    button.layer.shadowOpacity = 0.3; // 增强阴影效果
+    button.layer.shadowOffset = CGSizeMake(0, 4);
+    button.layer.shadowRadius = 6; // 增加阴影扩散
+
+    NSMutableAttributedString *attributedTitle = [[NSMutableAttributedString alloc] initWithString:title];
+    NSDictionary *attributes = @{
+        NSFontAttributeName: [UIFont systemFontOfSize:16 weight:UIFontWeightSemibold],
+        NSForegroundColorAttributeName: [UIColor whiteColor] // 白色文字，与渐变背景对比
+    };
+    [attributedTitle setAttributes:attributes range:NSMakeRange(0, title.length)];
+    [button setAttributedTitle:attributedTitle forState:UIControlStateNormal];
+
+    [button addTarget:target action:@selector(scaleDown:) forControlEvents:UIControlEventTouchDown];
+    [button addTarget:target action:@selector(scaleUp:) forControlEvents:UIControlEventTouchUpInside | UIControlEventTouchUpOutside];
+
+    return button;
+}
+
+// 定义自定义底部弹出视图控制器
+@interface BottomSheetViewController : UIViewController
+- (instancetype)initWithTitle:(NSString *)title message:(NSString *)message image:(UIImage *)image actions:(NSArray<UIButton *> *)actionButtons;
 @end
 
 // 定义呈现动画
@@ -160,13 +231,6 @@ static void safePresentViewController(UIViewController *viewController, UIViewCo
 
 // 定义退出动画
 @interface BottomSheetDismissalAnimation : NSObject <UIViewControllerAnimatedTransitioning>
-@end
-
-// 定义自定义底部弹出视图控制器
-@interface BottomSheetViewController : UIViewController {
-    BottomSheetTransition *_transitionDelegate;
-}
-- (instancetype)initWithTitle:(NSString *)title message:(NSString *)message image:(UIImage *)image actions:(NSArray<UIButton *> *)actionButtons;
 @end
 
 @implementation BottomSheetViewController {
@@ -184,10 +248,16 @@ static void safePresentViewController(UIViewController *viewController, UIViewCo
         _image = image;
         _actionButtons = actionButtons;
         self.modalPresentationStyle = UIModalPresentationCustom;
-        _transitionDelegate = [[BottomSheetTransition alloc] init];
-        self.transitioningDelegate = _transitionDelegate;
     }
     return self;
+}
+
+- (id<UIViewControllerAnimatedTransitioning>)animationControllerForPresentedController:(UIViewController *)presented presentingController:(UIViewController *)presenting sourceController:(UIViewController *)source {
+    return [[BottomSheetPresentationAnimation alloc] init];
+}
+
+- (id<UIViewControllerAnimatedTransitioning>)animationControllerForDismissedController:(UIViewController *)dismissed {
+    return [[BottomSheetDismissalAnimation alloc] init];
 }
 
 - (void)viewDidLoad {
@@ -195,15 +265,18 @@ static void safePresentViewController(UIViewController *viewController, UIViewCo
     self.view.backgroundColor = [UIColor clearColor];
 
     UIView *backgroundView = [[UIView alloc] initWithFrame:self.view.bounds];
-    backgroundView.backgroundColor = [UIColor grayColor];
-    backgroundView.alpha = 0.5;
+    backgroundView.backgroundColor = [UIColor clearColor]; // 改为透明
+    backgroundView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
     [self.view addSubview:backgroundView];
 
     UIView *contentView = [[UIView alloc] init];
-    contentView.backgroundColor = [UIColor whiteColor];
     contentView.translatesAutoresizingMaskIntoConstraints = NO;
-    contentView.layer.cornerRadius = 15;
-    contentView.layer.masksToBounds = YES;
+    contentView.backgroundColor = [UIColor whiteColor]; // 白色背景
+    contentView.layer.cornerRadius = 20;
+    contentView.layer.shadowColor = [UIColor blackColor].CGColor;
+    contentView.layer.shadowOpacity = 0.3; // 增强阴影效果
+    contentView.layer.shadowOffset = CGSizeMake(0, 4);
+    contentView.layer.shadowRadius = 6; // 增加阴影扩散
     [self.view addSubview:contentView];
 
     UIImageView *imageView = [[UIImageView alloc] initWithImage:_image];
@@ -215,7 +288,8 @@ static void safePresentViewController(UIViewController *viewController, UIViewCo
     UILabel *titleLabel = [[UILabel alloc] init];
     titleLabel.text = _title;
     titleLabel.textAlignment = NSTextAlignmentCenter;
-    titleLabel.font = [UIFont boldSystemFontOfSize:18];
+    titleLabel.font = [UIFont boldSystemFontOfSize:18]; // 黑色加粗
+    titleLabel.textColor = [UIColor blackColor]; // 黑色文字
     titleLabel.translatesAutoresizingMaskIntoConstraints = NO;
     [contentView addSubview:titleLabel];
 
@@ -223,56 +297,41 @@ static void safePresentViewController(UIViewController *viewController, UIViewCo
     messageLabel.text = _message;
     messageLabel.textAlignment = NSTextAlignmentCenter;
     messageLabel.numberOfLines = 0;
+    messageLabel.textColor = [UIColor systemBlueColor]; // 蓝色文字
     messageLabel.translatesAutoresizingMaskIntoConstraints = NO;
     [contentView addSubview:messageLabel];
 
-    UIView *buttonContainer = [[UIView alloc] init];
-    buttonContainer.translatesAutoresizingMaskIntoConstraints = NO;
-    [contentView addSubview:buttonContainer];
-
-    for (UIButton *button in _actionButtons) {
-        button.translatesAutoresizingMaskIntoConstraints = NO;
-        [buttonContainer addSubview:button];
-    }
+    UIStackView *buttonStack = [[UIStackView alloc] initWithArrangedSubviews:_actionButtons];
+    buttonStack.axis = UILayoutConstraintAxisHorizontal;
+    buttonStack.distribution = UIStackViewDistributionFillEqually;
+    buttonStack.spacing = 20;
+    buttonStack.translatesAutoresizingMaskIntoConstraints = NO;
+    [contentView addSubview:buttonStack];
 
     [NSLayoutConstraint activateConstraints:@[
         [contentView.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor constant:20],
         [contentView.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor constant:-20],
         [contentView.bottomAnchor constraintEqualToAnchor:self.view.bottomAnchor constant:-20],
-        [contentView.heightAnchor constraintEqualToConstant:250],
+        [contentView.heightAnchor constraintGreaterThanOrEqualToConstant:250],
+    
         [imageView.centerXAnchor constraintEqualToAnchor:contentView.centerXAnchor],
         [imageView.topAnchor constraintEqualToAnchor:contentView.topAnchor constant:20],
         [imageView.widthAnchor constraintEqualToConstant:100],
         [imageView.heightAnchor constraintEqualToConstant:100],
+    
         [titleLabel.topAnchor constraintEqualToAnchor:imageView.bottomAnchor constant:10],
         [titleLabel.leadingAnchor constraintEqualToAnchor:contentView.leadingAnchor constant:20],
         [titleLabel.trailingAnchor constraintEqualToAnchor:contentView.trailingAnchor constant:-20],
+    
         [messageLabel.topAnchor constraintEqualToAnchor:titleLabel.bottomAnchor constant:10],
         [messageLabel.leadingAnchor constraintEqualToAnchor:contentView.leadingAnchor constant:20],
         [messageLabel.trailingAnchor constraintEqualToAnchor:contentView.trailingAnchor constant:-20],
-        [buttonContainer.topAnchor constraintEqualToAnchor:messageLabel.bottomAnchor constant:20],
-        [buttonContainer.centerXAnchor constraintEqualToAnchor:contentView.centerXAnchor],
-        [buttonContainer.bottomAnchor constraintLessThanOrEqualToAnchor:contentView.bottomAnchor constant:-20],
-        [_actionButtons[0].leadingAnchor constraintEqualToAnchor:buttonContainer.leadingAnchor],
-        [_actionButtons[0].topAnchor constraintEqualToAnchor:buttonContainer.topAnchor],
-        [_actionButtons[0].bottomAnchor constraintEqualToAnchor:buttonContainer.bottomAnchor],
-        [_actionButtons[1].leadingAnchor constraintEqualToAnchor:_actionButtons[0].trailingAnchor constant:20],
-        [_actionButtons[1].topAnchor constraintEqualToAnchor:buttonContainer.topAnchor],
-        [_actionButtons[1].trailingAnchor constraintEqualToAnchor:buttonContainer.trailingAnchor],
-        [_actionButtons[1].bottomAnchor constraintEqualToAnchor:buttonContainer.bottomAnchor]
+    
+        [buttonStack.topAnchor constraintEqualToAnchor:messageLabel.bottomAnchor constant:20],
+        [buttonStack.leadingAnchor constraintEqualToAnchor:contentView.leadingAnchor constant:20],
+        [buttonStack.trailingAnchor constraintEqualToAnchor:contentView.trailingAnchor constant:-20],
+        [buttonStack.bottomAnchor constraintLessThanOrEqualToAnchor:contentView.bottomAnchor constant:-20]
     ]];
-}
-
-@end
-
-@implementation BottomSheetTransition
-
-- (id<UIViewControllerAnimatedTransitioning>)animationControllerForPresentedController:(UIViewController *)presented presentingController:(UIViewController *)presenting sourceController:(UIViewController *)source {
-    return [[BottomSheetPresentationAnimation alloc] init];
-}
-
-- (id<UIViewControllerAnimatedTransitioning>)animationControllerForDismissedController:(UIViewController *)dismissed {
-    return [[BottomSheetDismissalAnimation alloc] init];
 }
 
 @end
@@ -280,7 +339,7 @@ static void safePresentViewController(UIViewController *viewController, UIViewCo
 @implementation BottomSheetPresentationAnimation
 
 - (NSTimeInterval)transitionDuration:(id<UIViewControllerContextTransitioning>)transitionContext {
-    return 0.3;
+    return 0.4;
 }
 
 - (void)animateTransition:(id<UIViewControllerContextTransitioning>)transitionContext {
@@ -290,11 +349,16 @@ static void safePresentViewController(UIViewController *viewController, UIViewCo
     toView.frame = initialFrame;
     [transitionContext.containerView addSubview:toView];
 
-    [UIView animateWithDuration:[self transitionDuration:transitionContext] animations:^{
-        toView.frame = CGRectMake(0, [UIScreen mainScreen].bounds.size.height - 250, [UIScreen mainScreen].bounds.size.width, 250);
-    } completion:^(BOOL finished) {
-        [transitionContext completeTransition:finished];
-    }];
+    [UIView animateWithDuration:[self transitionDuration:transitionContext]
+          delay:0
+          usingSpringWithDamping:0.8
+          initialSpringVelocity:0
+          options:UIViewAnimationOptionCurveEaseInOut
+          animations:^{
+              toView.frame = CGRectMake(0, [UIScreen mainScreen].bounds.size.height - 250, [UIScreen mainScreen].bounds.size.width, 250);
+          } completion:^(BOOL finished) {
+              [transitionContext completeTransition:finished];
+          }];
 }
 
 @end
@@ -302,18 +366,23 @@ static void safePresentViewController(UIViewController *viewController, UIViewCo
 @implementation BottomSheetDismissalAnimation
 
 - (NSTimeInterval)transitionDuration:(id<UIViewControllerContextTransitioning>)transitionContext {
-    return 0.3;
+    return 0.4;
 }
 
 - (void)animateTransition:(id<UIViewControllerContextTransitioning>)transitionContext {
     UIViewController *fromVC = [transitionContext viewControllerForKey:UITransitionContextFromViewControllerKey];
     UIView *fromView = fromVC.view;
 
-    [UIView animateWithDuration:[self transitionDuration:transitionContext] animations:^{
-        fromView.frame = CGRectMake(0, [UIScreen mainScreen].bounds.size.height, fromView.bounds.size.width, fromView.bounds.size.height);
-    } completion:^(BOOL finished) {
-        [transitionContext completeTransition:finished];
-    }];
+    [UIView animateWithDuration:[self transitionDuration:transitionContext]
+          delay:0
+          usingSpringWithDamping:0.8
+          initialSpringVelocity:0
+          options:UIViewAnimationOptionCurveEaseInOut
+          animations:^{
+              fromView.frame = CGRectMake(0, [UIScreen mainScreen].bounds.size.height, fromView.bounds.size.width, fromView.bounds.size.height);
+          } completion:^(BOOL finished) {
+              [transitionContext completeTransition:finished];
+          }];
 }
 
 @end
@@ -325,13 +394,9 @@ static void safePresentViewController(UIViewController *viewController, UIViewCo
 - (void)showThirdAlert;
 - (void)dismissPresentedAlert;
 - (void)triggerExitIfNeeded;
+- (void)scaleDown:(UIButton *)button;
+- (void)scaleUp:(UIButton *)button;
 @end
-
-
-
-
-
-// ============================================================
 
 %hook UIViewController
 
@@ -361,12 +426,10 @@ static void safePresentViewController(UIViewController *viewController, UIViewCo
 
 %new
 - (void)showDisclaimerAlert {
-    UIButton *disagreeButton = [UIButton buttonWithType:UIButtonTypeSystem];
-    [disagreeButton setTitle:@"不同意" forState:UIControlStateNormal];
+    UIButton *disagreeButton = createDeepBlueButton(@"不同意", self);
     [disagreeButton addTarget:self action:@selector(disagreeAction) forControlEvents:UIControlEventTouchUpInside];
 
-    UIButton *agreeButton = [UIButton buttonWithType:UIButtonTypeSystem];
-    [agreeButton setTitle:@"已同意" forState:UIControlStateNormal];
+    UIButton *agreeButton = createDeepBlueButton(@"同意", self);
     [agreeButton addTarget:self action:@selector(agreeAction) forControlEvents:UIControlEventTouchUpInside];
 
     BottomSheetViewController *bottomSheet = [[BottomSheetViewController alloc] initWithTitle:@"免责声明"
@@ -378,6 +441,7 @@ static void safePresentViewController(UIViewController *viewController, UIViewCo
 
 %new
 - (void)disagreeAction {
+    NSLog(@"[Debug] 点击了不同意按钮");
     UIViewController *topVC = getActiveTopViewController();
     if (topVC) {
         [topVC dismissViewControllerAnimated:YES completion:^{
@@ -388,6 +452,7 @@ static void safePresentViewController(UIViewController *viewController, UIViewCo
 
 %new
 - (void)agreeAction {
+    NSLog(@"[Debug] 点击了同意按钮");
     UIViewController *topVC = getActiveTopViewController();
     if (topVC) {
         [topVC dismissViewControllerAnimated:YES completion:^{
@@ -398,12 +463,10 @@ static void safePresentViewController(UIViewController *viewController, UIViewCo
 
 %new
 - (void)showNextAlert {
-    UIButton *sourceCodeButton = [UIButton buttonWithType:UIButtonTypeSystem];
-    [sourceCodeButton setTitle:@"👉 源代码" forState:UIControlStateNormal];
+    UIButton *sourceCodeButton = createDeepBlueButton(@"👉 源代码", self);
     [sourceCodeButton addTarget:self action:@selector(sourceCodeAction) forControlEvents:UIControlEventTouchUpInside];
 
-    UIButton *nextButton = [UIButton buttonWithType:UIButtonTypeSystem];
-    [nextButton setTitle:@"下一步" forState:UIControlStateNormal];
+    UIButton *nextButton = createDeepBlueButton(@"下一步", self);
     [nextButton addTarget:self action:@selector(nextAction) forControlEvents:UIControlEventTouchUpInside];
 
     BottomSheetViewController *bottomSheet = [[BottomSheetViewController alloc] initWithTitle:@"请随意修改～ 我不在意的！"
@@ -415,6 +478,7 @@ static void safePresentViewController(UIViewController *viewController, UIViewCo
 
 %new
 - (void)sourceCodeAction {
+    NSLog(@"[Debug] 点击了源代码按钮");
     [self dismissPresentedAlert];
     NSURL *url = [NSURL URLWithString:@"https://github.com/pxx917144686/Surge_pxx/releases"];
     if ([[UIApplication sharedApplication] canOpenURL:url]) {
@@ -426,6 +490,7 @@ static void safePresentViewController(UIViewController *viewController, UIViewCo
 
 %new
 - (void)nextAction {
+    NSLog(@"[Debug] 点击了下一步按钮");
     UIViewController *topVC = getActiveTopViewController();
     if (topVC) {
         [topVC dismissViewControllerAnimated:YES completion:^{
@@ -436,12 +501,10 @@ static void safePresentViewController(UIViewController *viewController, UIViewCo
 
 %new
 - (void)showThirdAlert {
-    UIButton *thumbUpButton = [UIButton buttonWithType:UIButtonTypeSystem];
-    [thumbUpButton setTitle:@"👍" forState:UIControlStateNormal];
+    UIButton *thumbUpButton = createModernButton(@"👍", [UIColor systemGreenColor], [UIColor greenColor], self);
     [thumbUpButton addTarget:self action:@selector(thumbUpAction) forControlEvents:UIControlEventTouchUpInside];
 
-    UIButton *thumbDownButton = [UIButton buttonWithType:UIButtonTypeSystem];
-    [thumbDownButton setTitle:@"👎" forState:UIControlStateNormal];
+    UIButton *thumbDownButton = createModernButton(@"👎", [UIColor systemRedColor], [UIColor systemPinkColor], self);
     [thumbDownButton addTarget:self action:@selector(thumbDownAction) forControlEvents:UIControlEventTouchUpInside];
 
     BottomSheetViewController *bottomSheet = [[BottomSheetViewController alloc] initWithTitle:@"pxx 更新"
@@ -453,6 +516,7 @@ static void safePresentViewController(UIViewController *viewController, UIViewCo
 
 %new
 - (void)thumbUpAction {
+    NSLog(@"[Debug] 点击了👍按钮");
     UIViewController *topVC = getActiveTopViewController();
     if (topVC) {
         [topVC dismissViewControllerAnimated:YES completion:^{
@@ -468,6 +532,7 @@ static void safePresentViewController(UIViewController *viewController, UIViewCo
 
 %new
 - (void)thumbDownAction {
+    NSLog(@"[Debug] 点击了👎按钮");
     [self dismissPresentedAlert];
     NSURL *url = [NSURL URLWithString:@"https://nssurge.com/payment?product=surge-ios-3-pro&title=Surge%20iOS%20Pro%20Personal%20License&price=49.99"];
     if ([[UIApplication sharedApplication] canOpenURL:url]) {
@@ -491,8 +556,30 @@ static void safePresentViewController(UIViewController *viewController, UIViewCo
 - (void)triggerExitIfNeeded {
     dispatch_async(dispatch_get_main_queue(), ^{
         NSLog(@"[Info] 模拟返回主屏幕");
-        [[UIApplication sharedApplication] performSelector:@selector(suspend)];
+        // 修正：UIApplication 无 suspend 方法，改为最小化应用
+        UIApplication *app = [UIApplication sharedApplication];
+        if ([app respondsToSelector:@selector(performSelector:withObject:afterDelay:)]) {
+            [app performSelector:@selector(suspend) withObject:nil afterDelay:0.0];
+        } else {
+            NSLog(@"[Error] suspend 方法不可用，尝试其他退出方式");
+        }
     });
+}
+
+%new
+- (void)scaleDown:(UIButton *)button {
+    [UIView animateWithDuration:0.2 animations:^{
+        button.transform = CGAffineTransformMakeScale(0.9, 0.9);
+        button.layer.shadowOpacity = 0.4; // 点击时阴影增强
+    }];
+}
+
+%new
+- (void)scaleUp:(UIButton *)button {
+    [UIView animateWithDuration:0.2 animations:^{
+        button.transform = CGAffineTransformIdentity;
+        button.layer.shadowOpacity = 0.3; // 恢复默认阴影
+    }];
 }
 
 %end
